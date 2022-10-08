@@ -1,0 +1,19 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Dimmer</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="stylesheet" type="text/css" href="style.css">
+</head>
+
+<body>
+  <p>Time: %CURRENT_TIME%</p>
+  <input type="checkbox" id="switch" /><label for="switch">On/Off</label>
+  <input type="range" id="volume" name="volume" min="0" max="1000">
+  <form action="savecfg">
+    <textarea name="cfg" rows="20" class="config">%CONFIG_JSON%</textarea>
+    <input type="Submit" value="Save"/>
+  </form>
+  <p class="config">%CONFIG_SERIALIZED%</p>
+</body>
+</html> 

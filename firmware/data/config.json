@@ -1,0 +1,19 @@
+{
+"timezone": 3,
+"onDurationMs": 2000,
+"offDurationMs": 1000,
+"schedule": [
+{
+    "time":"06:30",
+    "days":"*****..",
+    "brightness":1000,
+    "duration":60
+},
+{
+    "time":"06:31",
+    "days":"*****..",
+    "brightness":0,
+    "duration":60
+}
+]
+}

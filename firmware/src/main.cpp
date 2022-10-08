@@ -1,6 +1,12 @@
 #include <Arduino.h>
 #include <RotaryEncoder.h>
 #include <math.h>
+#include <FS.h>
+
+#include "web.h"
+#include "ntp.h"
+#include "config.h"
+
 extern "C" {
   #include <pwm.h>
 }
@@ -16,8 +22,15 @@ extern "C" {
 #define MIN_PERIOD 500 // minimum PWM period, units. 500 units correspond to 10KHz
 #define MAX_PERIOD 50000 // maximum PWM period, units. 50k units correspond to 200Hz
 
+uint32 period, duty;
+
+unsigned long brightnessChangeMs = 0;
+
+static int pos;
+unsigned long lastTick;
+
 uint32 io_info[PWM_CHANNELS][3] = {
-  {PERIPHS_IO_MUX_GPIO5_U, FUNC_GPIO5 ,  5}
+  {PERIPHS_IO_MUX_GPIO5_U, FUNC_GPIO5 , 5}
 };
 
 uint32 pwm_duty_init[PWM_CHANNELS] = {0};
@@ -25,6 +38,7 @@ uint32 pwm_duty_init[PWM_CHANNELS] = {0};
 RotaryEncoder *encoder = nullptr;
 
 volatile bool btn_pressed = false;
+bool is_on = false;
 
 IRAM_ATTR void checkPosition()
 {
@@ -54,51 +68,20 @@ void setup()
   pwm_init(200, pwm_duty_init, PWM_CHANNELS, io_info);
   pwm_start();
 
+  Web::setup(!digitalRead(PIN_BTN));
+  Ntp::setup();
+  Config::setup();
+
+  pos = Config::getBrightness();
+  encoder->setPosition(pos);
+
 } // setup()
 
-static int pos = 0;
-unsigned long lastTick;
-
-void loop()
-{
-
-  encoder->tick();
-
-  int newPos = encoder->getPosition();
-  //int newPos = millis()/30;
-  //if (newPos > 1000) newPos = 1000;
-
-  if (pos != newPos) {
-    unsigned long tickDiff = millis() - lastTick;
-    lastTick = millis();
-
-    //empiric formula that gives the brighthess increase/decrease dependent on knob rotation (faster rotation -> more change)
-    int increase = 1 + (int)roundf(99.0*powf(2,-0.1*tickDiff));
-
-    if (newPos > pos) {
-      newPos = pos + increase;
-    } else {
-      newPos = pos - increase;
-    }
-
-    if (newPos <0 ) {
-      newPos = 0;
-    }
-    if (newPos > 1000) {
-      newPos = 1000;
-    }
-    encoder->setPosition(newPos);
-    pos = newPos;
-
+//value is from 9 (fully off) to 1000 (100% duty)
+void setBrigthess(unsigned int value) {
 
     //idea taken here: https://electronics.stackexchange.com/a/550434
-    float dc = (powf(100.0, pos / 1000.0) - 1.0) / 99.0;
-
-    Serial.printf("pos:%d dc:%f", pos, dc);
-    Serial.printf(" td:%ld", tickDiff);
-
-    uint32 period, duty;
-
+    float dc = (powf(100.0, value / 1000.0) - 1.0) / 99.0;
 /*
     //https://www.johndcook.com/blog/2010/10/20/best-rational-approximation/
 
@@ -158,16 +141,76 @@ void loop()
     //and lower period values for higher duty cycle (to avoid flickering)
     period = MIN_PERIOD + (uint32)roundf((MAX_PERIOD-MIN_PERIOD)*powf(2,-20.0*dc));
     duty = (uint32)roundf(dc*period);
-    Serial.printf(" d:%d p:%d p/d:%f", duty, period, (float)duty/period);
 
     pwm_set_period(period);
     pwm_set_duty(duty,0);
     pwm_start();
 
-    Serial.println();
-  } // if
+}
+
+void loop()
+{
+  //encoder->tick();
+
+  int newPos = encoder->getPosition();
+  //int newPos = millis()/1000;
+  if (newPos > 1000) newPos = 1000;
+
+  if ((brightnessChangeMs != 0) && millis() > brightnessChangeMs + 5000) {
+    Config::saveBrightness(pos);
+    brightnessChangeMs = 0;
+  }
+
+  if (pos != newPos) {
+
+    if (!is_on) {
+      pos = 0;
+      is_on = true;
+    }
+    unsigned long tickDiff = millis() - lastTick;
+    lastTick = millis();
+
+    //empiric formula that gives the brighthess increase/decrease dependent on knob rotation (faster rotation -> more change)
+    int increase =  1 + (int)roundf(99.0*powf(2,-0.03*tickDiff));
+
+    if (newPos > pos) {
+      newPos = pos + increase;
+    } else {
+      newPos = pos - increase;
+    }
+
+    if (newPos < 1 ) {
+      newPos = 1;
+    }
+    if (newPos > 1000) {
+      newPos = 1000;
+    }
+    encoder->setPosition(newPos);
+    pos = newPos;
+
+    setBrigthess(pos);
+    Serial.printf("pos:%d td:%ld", pos, tickDiff);Serial.println();
+
+    brightnessChangeMs = millis();
+
+  } // if encoder was ticked
+
   if (btn_pressed) {
-    Serial.println("btn");
+    Serial.print("btn");
+    if (is_on) {
+      setBrigthess(0);
+      is_on = false;
+      Serial.println(":off");
+    } else {
+      setBrigthess(pos);
+      is_on = true;
+      Serial.println(":on");
+    }
     btn_pressed = false;
   }
+
+  Ntp::loop();
+
+  Web::loop();
+
 } // loop ()
