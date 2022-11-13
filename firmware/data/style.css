@@ -5,52 +5,6 @@ html {
     text-align: center;
   }
  
-input[type=checkbox]{
-  height: 0;
-  width: 0;
-  visibility: hidden;
-}
-
-input[type=checkbox] + label {
-  cursor: pointer;
-  text-indent: -9999px;
-  width: 100px;
-  height: 50px;
-  background: grey;
-  display: inline-block;
-  border-radius: 100px;
-  position: relative;
-}
-
-input[type=checkbox] + label:after {
-  content: '';
-  position: absolute;
-  top: 5px;
-  left: 5px;
-  width: 40px;
-  height: 40px;
-  background: #fff;
-  border-radius: 90px;
-  transition: 0.3s;
-}
-
-input[type=checkbox]:checked + label {
-  background: #bada55;
-}
-
-input[type=checkbox]:checked + label:after {
-  left: calc(100% - 5px);
-  transform: translateX(-100%);
-}
-
-input[type=checkbox] + label:active:after {
-  width: 70px;
-}
-
-input[type=range] {
-  width: 100%;
-}
-
 textarea.config {
   width: 100%;
 }

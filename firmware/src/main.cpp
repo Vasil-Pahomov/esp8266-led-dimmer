@@ -22,12 +22,16 @@ extern "C" {
 #define MIN_PERIOD 500 // minimum PWM period, units. 500 units correspond to 10KHz
 #define MAX_PERIOD 50000 // maximum PWM period, units. 50k units correspond to 200Hz
 
-uint32 period, duty;
+unsigned long lastManualBrightnessChangeMs = 0; // last manual brightness change time (used to track timeout to save brighthess value)
 
-unsigned long brightnessChangeMs = 0;
+int curBrightness; // current brightness value
 
-static int pos;
-unsigned long lastTick;
+long autoBrightnessChangeSpeed; // speed of automatic brightness change, in units per millisecond
+unsigned long autoBrightnessChangeStartMs; // time of automatic brigthness change start 
+unsigned long autoBrightnessChangeEndMs; // end time of automatic brightness change
+int autoBrightnessChangeStartValue; // starting value of brigthness for automatic change
+
+int prevPos; // previous encoder position
 
 uint32 io_info[PWM_CHANNELS][3] = {
   {PERIPHS_IO_MUX_GPIO5_U, FUNC_GPIO5 , 5}
@@ -38,7 +42,6 @@ uint32 pwm_duty_init[PWM_CHANNELS] = {0};
 RotaryEncoder *encoder = nullptr;
 
 volatile bool btn_pressed = false;
-bool is_on = false;
 
 IRAM_ATTR void checkPosition()
 {
@@ -72,8 +75,9 @@ void setup()
   Ntp::setup();
   Config::setup();
 
-  pos = Config::getBrightness();
-  encoder->setPosition(pos);
+  curBrightness = 0;
+  encoder->setPosition(curBrightness);
+  prevPos = curBrightness;
 
 } // setup()
 
@@ -137,6 +141,8 @@ void setBrigthess(unsigned int value) {
     }
 */
 
+    uint32 period, duty;
+
     //empiric formula that gives high period values for low duty cycle (in order to achieve low brightess with higher accuracy) 
     //and lower period values for higher duty cycle (to avoid flickering)
     period = MIN_PERIOD + (uint32)roundf((MAX_PERIOD-MIN_PERIOD)*powf(2,-20.0*dc));
@@ -148,63 +154,86 @@ void setBrigthess(unsigned int value) {
 
 }
 
+
+void startBrightAutoChange(int target, int durationMsec) {
+  autoBrightnessChangeStartValue = curBrightness;
+  autoBrightnessChangeSpeed = 1000000L * (target - autoBrightnessChangeStartValue) / durationMsec;
+  autoBrightnessChangeStartMs = millis();
+  autoBrightnessChangeEndMs = autoBrightnessChangeStartMs + durationMsec;
+
+  Serial.print(curBrightness);Serial.print('>');Serial.print(target);Serial.print(' ');
+  Serial.print(autoBrightnessChangeStartMs);Serial.print('>');Serial.print(autoBrightnessChangeEndMs);
+  Serial.print('@');Serial.print(autoBrightnessChangeSpeed);
+  Serial.println();
+
+}
+
 void loop()
 {
-  //encoder->tick();
+  if (autoBrightnessChangeSpeed != 0) {
+    curBrightness = autoBrightnessChangeStartValue + autoBrightnessChangeSpeed * (long) (millis()-autoBrightnessChangeStartMs) / 1000000L;
+    if (curBrightness < 0) curBrightness = 0;
+    if (curBrightness > 10000) curBrightness = 1000;
+    //Serial.print(millis()-autoBrightnessChangeStartMs);Serial.print('-');Serial.print(curBrightness);Serial.println();
+    setBrigthess(curBrightness);
 
-  int newPos = encoder->getPosition();
-  //int newPos = millis()/1000;
-  if (newPos > 1000) newPos = 1000;
-
-  if ((brightnessChangeMs != 0) && millis() > brightnessChangeMs + 5000) {
-    Config::saveBrightness(pos);
-    brightnessChangeMs = 0;
+     if (millis() > autoBrightnessChangeEndMs)
+     {
+      autoBrightnessChangeSpeed = 0;
+     }
   }
 
-  if (pos != newPos) {
+  int newPos = encoder->getPosition();
+  if (newPos > 1000) newPos = 1000;
 
-    if (!is_on) {
-      pos = 0;
-      is_on = true;
-    }
-    unsigned long tickDiff = millis() - lastTick;
-    lastTick = millis();
+  if (prevPos!= newPos) {
+
+    unsigned long tickDiff = millis() - lastManualBrightnessChangeMs;
 
     //empiric formula that gives the brighthess increase/decrease dependent on knob rotation (faster rotation -> more change)
     int increase =  1 + (int)roundf(99.0*powf(2,-0.03*tickDiff));
 
-    if (newPos > pos) {
-      newPos = pos + increase;
+    if (newPos > curBrightness) {
+      newPos = curBrightness + increase;
     } else {
-      newPos = pos - increase;
+      newPos = curBrightness - increase;
     }
 
-    if (newPos < 1 ) {
-      newPos = 1;
+    if (newPos < 0 ) {
+      newPos = 0;
     }
     if (newPos > 1000) {
       newPos = 1000;
     }
     encoder->setPosition(newPos);
-    pos = newPos;
+    curBrightness = newPos;
 
-    setBrigthess(pos);
-    Serial.printf("pos:%d td:%ld", pos, tickDiff);Serial.println();
+    prevPos = newPos;
 
-    brightnessChangeMs = millis();
+    setBrigthess(curBrightness);
+    Serial.printf("pos:%d td:%ld", curBrightness, tickDiff);Serial.println();
+
+    lastManualBrightnessChangeMs = millis();
+
+    autoBrightnessChangeSpeed = 0; //stop automatic brigthness change on manual knob rotation
 
   } // if encoder was ticked
 
+  if ((lastManualBrightnessChangeMs != 0) && millis() > lastManualBrightnessChangeMs + 1000) {
+    Config::saveBrightness(curBrightness);
+    lastManualBrightnessChangeMs = 0;
+  }
+
   if (btn_pressed) {
     Serial.print("btn");
-    if (is_on) {
-      setBrigthess(0);
-      is_on = false;
+    if (curBrightness != 0) {
       Serial.println(":off");
+      startBrightAutoChange(0, Config::getOffDurationMs());
     } else {
-      setBrigthess(pos);
-      is_on = true;
       Serial.println(":on");
+      unsigned int bri = Config::getBrightness();
+      if (bri == 0) bri = Config::getDefaultBrightness();
+      startBrightAutoChange(bri, Config::getOnDurationMs());
     }
     btn_pressed = false;
   }

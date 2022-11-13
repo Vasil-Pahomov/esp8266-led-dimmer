@@ -8,7 +8,7 @@ namespace Config {
 #define CONFIG_FILE_NAME "/config.json"
 #define BRIGHNTESS_FILE_NAME "/bri"
 
-int timeZone, onDurationMs, offDurationMs;
+int timeZone, onDurationMs, offDurationMs, storedBrighthess = -1;
 
 StaticJsonDocument<1024> configDoc;
 
@@ -25,6 +25,7 @@ DeserializationError deserialize(String json) {
 }
 
 DeserializationError setup() {
+    storedBrighthess = -1;
     return deserialize(getJson());
 }
 
@@ -45,18 +46,37 @@ String serialize() {
 }
 
 unsigned int getBrightness() {
-    File cf = LittleFS.open(BRIGHNTESS_FILE_NAME, "r");
-    unsigned int res = 0;
-    cf.readBytes((char*)&res, sizeof(unsigned int));
-    Serial.print("Read bri=");Serial.println(res);
-    cf.close();
-    return res;
+    if (storedBrighthess < 0) {
+        File cf = LittleFS.open(BRIGHNTESS_FILE_NAME, "r");
+        cf.readBytes((char*)&storedBrighthess, sizeof(unsigned int));
+        Serial.print("Read bri=");Serial.println(storedBrighthess);
+        cf.close();
+    }   
+    return storedBrighthess;
 }
 
 void saveBrightness(unsigned int brigthness) {
     File cf = LittleFS.open(BRIGHNTESS_FILE_NAME, "w");
     cf.write((char*)&brigthness, sizeof(unsigned int));
     cf.close();
+    storedBrighthess = brigthness;
     Serial.print("Write bri=");Serial.println(brigthness);
 }
+
+int getTimeZone() {
+    return getJsonDoc()["timeZone"];
+}
+
+unsigned int getOnDurationMs() {
+    return getJsonDoc()["onDurationMs"];
+}
+
+unsigned int getOffDurationMs() {
+    return getJsonDoc()["offDurationMs"];
+}
+
+unsigned int getDefaultBrightness() {
+    return getJsonDoc()["defaultBrightness"];
+}
+
 }

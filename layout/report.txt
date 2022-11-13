@@ -1,0 +1,28 @@
+Информация: Резервное копирование файла "C:\Users\Vasil\MyDocuments\My\LedDimmer\esp8266-led-dimmer\layout\sym-lib-table" в файл "C:\Users\Vasil\MyDocuments\My\LedDimmer\esp8266-led-dimmer\layout\rescue-backup\sym-lib-table-2022-02-11-11-58-23".
+Информация: Резервное копирование файла "C:\Users\Vasil\MyDocuments\My\LedDimmer\esp8266-led-dimmer\layout\ESPDimmer.sch" в файл "C:\Users\Vasil\MyDocuments\My\LedDimmer\esp8266-led-dimmer\layout\rescue-backup\ESPDimmer-2022-02-11-11-58-23.sch".
+Информация: Резервное копирование файла "C:\Users\Vasil\MyDocuments\My\LedDimmer\esp8266-led-dimmer\layout\ESPDimmer.pro" в файл "C:\Users\Vasil\MyDocuments\My\LedDimmer\esp8266-led-dimmer\layout\rescue-backup\ESPDimmer-2022-02-11-11-58-23.pro".
+Информация: Резервное копирование файла "C:\Users\Vasil\MyDocuments\My\LedDimmer\esp8266-led-dimmer\layout\ESPDimmer-cache.lib" в файл "C:\Users\Vasil\MyDocuments\My\LedDimmer\esp8266-led-dimmer\layout\rescue-backup\ESPDimmer-cache-2022-02-11-11-58-23.lib".
+Информация: Резервное копирование файла "C:\Users\Vasil\MyDocuments\My\LedDimmer\esp8266-led-dimmer\layout\ESPDimmer-rescue.lib" в файл "C:\Users\Vasil\MyDocuments\My\LedDimmer\esp8266-led-dimmer\layout\rescue-backup\ESPDimmer-rescue-2022-02-11-11-58-23.lib".
+Информация: Резервное копирование файла "C:\Users\Vasil\MyDocuments\My\LedDimmer\esp8266-led-dimmer\layout\ESPDimmer-rescue.dcm" в файл "C:\Users\Vasil\MyDocuments\My\LedDimmer\esp8266-led-dimmer\layout\rescue-backup\ESPDimmer-rescue-2022-02-11-11-58-23.dcm".
+Информация: Добавление библиотеки "ESPDimmer-rescue", файл "${KIPRJMOD}/ESPDimmer-rescue.lib" к таблице библиотек компонентов проекта.
+Компонент "CONN_01X03" переназначен к библиотеке "ESPDimmer-rescue".
+Компонент "C_Small" переназначен к библиотеке "Device".
+Компонент "GND" переназначен к библиотеке "power".
+Компонент "GND" переназначен к библиотеке "power".
+Компонент "+3V3" переназначен к библиотеке "power".
+Компонент "VCC" переназначен к библиотеке "power".
+Компонент "Q_NMOS_GDS" переназначен к библиотеке "Device".
+Компонент "CONN_01X02" переназначен к библиотеке "ESPDimmer-rescue".
+Компонент "VCC" переназначен к библиотеке "power".
+Компонент "CONN_01X03" переназначен к библиотеке "ESPDimmer-rescue".
+Компонент "GND" переназначен к библиотеке "power".
+Компонент "ESP-12E" переназначен к библиотеке "ESPDimmer-rescue".
+Компонент "+3V3" переназначен к библиотеке "power".
+Компонент "+3V3" переназначен к библиотеке "power".
+Компонент "CONN_01X02" переназначен к библиотеке "ESPDimmer-rescue".
+Компонент "+3V3" переназначен к библиотеке "power".
+Компонент "R_Small" переназначен к библиотеке "Device".
+Компонент "C_Small" переназначен к библиотеке "Device".
+Компонент "C_Small" переназначен к библиотеке "Device".
+Компонент "TLV1117" переназначен к библиотеке "ESPDimmer-rescue".
+Информация: Переназначение библиотек компонентов таблицы завершено!

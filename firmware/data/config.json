@@ -1,7 +1,8 @@
 {
-"timezone": 3,
+"timeZone": 3,
 "onDurationMs": 2000,
 "offDurationMs": 1000,
+"defaultBrightness": 500,
 "schedule": [
 {
     "time":"06:30",
